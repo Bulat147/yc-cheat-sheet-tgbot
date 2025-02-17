@@ -36,6 +36,7 @@ resource "yandex_function" "tgbot-func" {
   execution_timeout = "10"
 
   environment = {
+    CATALOG_ID = var.folder_id
     TELEGRAM_TOKEN = var.tg_bot_key
     GPT_API_KEY = yandex_iam_service_account_api_key.sa-api-key.secret_key
     GPT_API_URI = "gpt://${var.folder_id}/yandexgpt/latest"
