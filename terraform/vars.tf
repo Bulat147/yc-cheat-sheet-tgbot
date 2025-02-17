@@ -22,7 +22,7 @@ variable "tf_sa_id" {
   description = "Сервисный аккаунт для terraform"
 }
 
-variable "tg_token" {
+variable "tg_bot_key" {
   type = string
   description = "Токен телеграм-бота"
 }

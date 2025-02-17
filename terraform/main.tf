@@ -33,7 +33,17 @@ resource "yandex_function" "tgbot-func" {
   runtime           = "python312"
   entrypoint        = "tg_bot.handler"
   memory            = 128
-  environment = { "TELEGRAM_TOKEN" = var.tg_token }
+  execution_timeout = "10"
+
+  environment = {
+    TELEGRAM_TOKEN = var.tg_bot_key
+    GPT_API_KEY = yandex_iam_service_account_api_key.sa-api-key.secret_key
+    GPT_API_URI = "gpt://${var.folder_id}/yandexgpt/latest"
+    BUCKET_NAME = yandex_storage_bucket.bucket-tg.bucket
+    INSTRUCTION_KEY = yandex_storage_object.instruction.key
+    STORAGE_ACCESS_KEY = yandex_iam_service_account_static_access_key.sa-static-key.access_key
+    STORAGE_SECRET_KEY = yandex_iam_service_account_static_access_key.sa-static-key.secret_key
+  }
   content {
     zip_filename = archive_file.zip.output_path
   }
@@ -63,7 +73,7 @@ output "yandex_function_tgbot_func" {
 
 resource "null_resource" "set_tg_webhook" {
   provisioner "local-exec" {
-    command = "curl 'https://api.telegram.org/bot${var.tg_token}/setWebhook?url=https://functions.yandexcloud.net/${yandex_function.tgbot-func.id}'"
+    command = "curl 'https://api.telegram.org/bot${var.tg_bot_key}/setWebhook?url=https://functions.yandexcloud.net/${yandex_function.tgbot-func.id}'"
   }
 
   depends_on = [yandex_function.tgbot-func]
@@ -71,7 +81,7 @@ resource "null_resource" "set_tg_webhook" {
 
 resource "null_resource" "delete_tf_webhook" {
   triggers = {
-    tg_token = var.tg_token
+    tg_token = var.tg_bot_key
   }
 
   provisioner "local-exec" {
@@ -79,3 +89,33 @@ resource "null_resource" "delete_tf_webhook" {
     command = "curl 'https://api.telegram.org/bot${self.triggers.tg_token}/deleteWebhook'"
   }
 }
+
+resource "yandex_iam_service_account_api_key" "sa-api-key" {
+  service_account_id = var.tf_sa_id
+}
+
+resource "yandex_iam_service_account_static_access_key" "sa-static-key" {
+  service_account_id = var.tf_sa_id
+  description        = "static access key for object storage"
+}
+
+resource "yandex_storage_bucket" "bucket-tg" {
+  access_key            = yandex_iam_service_account_static_access_key.sa-static-key.access_key
+  secret_key            = yandex_iam_service_account_static_access_key.sa-static-key.secret_key
+  bucket                = "bkhalilov-bucket-147"
+  default_storage_class = "standard"
+  anonymous_access_flags {
+    read        = true
+    list        = true
+    config_read = false
+  }
+}
+
+resource "yandex_storage_object" "instruction" {
+  access_key = yandex_iam_service_account_static_access_key.sa-static-key.access_key
+  secret_key = yandex_iam_service_account_static_access_key.sa-static-key.secret_key
+  bucket     = yandex_storage_bucket.bucket-tg.bucket
+  key        = "instruction"
+  source     = "../yandex-gpt/instruction.json"
+}
+
