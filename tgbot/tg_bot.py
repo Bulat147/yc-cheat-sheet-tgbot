@@ -164,6 +164,8 @@ def handle_update(update):
 
         if question == '/start':
             send_message(chat_id, 'Привет! Я ваш Telegram-бот.')
+        if question == '/help':
+            send_message(chat_id, 'Напиши вопрос')
         elif question is None:
             send_message(chat_id, "Я могу обработать только текстовое сообщение или фотографию.")
         else:

@@ -33,7 +33,7 @@ resource "yandex_function" "tgbot-func" {
   runtime           = "python312"
   entrypoint        = "tg_bot.handler"
   memory            = 128
-  execution_timeout = "10"
+  execution_timeout = "100"
 
   environment = {
     CATALOG_ID = var.folder_id
