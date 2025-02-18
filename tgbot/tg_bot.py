@@ -88,15 +88,11 @@ def extract_text_from_ocr(response_json):
     full_text = []
     try:
         result = response_json.get("result", {})
-        logger.error(result)
         if not result:
             return ""
 
         text_annotation = result.get("textAnnotation", {})
-        logger.error(text_annotation)
-
         blocks = text_annotation.get("blocks", [])
-        logger.error(blocks)
 
         if not blocks:
             return ""
@@ -157,7 +153,6 @@ def handle_update(update):
             file_path = get_file_path(file_id)
             file_rs = get_file_by_path(file_path)
             question = get_text_from_photo(file_rs)
-            logger.error(question)
         else:
             send_message(chat_id, "Я могу обработать только текстовое сообщение или фотографию.")
             return
